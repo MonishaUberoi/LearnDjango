@@ -1,6 +1,10 @@
 from django.shortcuts import render
 from django.http import HttpResponse,JsonResponse
+from .forms import *
 # Create your views here.
+def error_404_view(request, exception):
+    return render(request, '404.html')
+
 def myfunctioncall(request):
     return HttpResponse("Hello World")
 def myfunctionabout(request):
@@ -53,3 +57,50 @@ def myimagepage5(request, imagename):
         "var":var
     }
     return render(request, 'imagepage5.html', context=mydictionary)
+def myform(request):
+    return render(request, 'myform.html')
+def submitmyform(request):
+    mydictionary={
+        "var1" : request.POST['mytext'],
+        "var2" : request.POST['mytextarea'],
+        "method" : request.method
+    }
+    return JsonResponse(mydictionary)
+def myform2(request):
+    if request.method == "POST":
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            title = request.POST['title']
+            subject = request.POST['subject']
+            email = request.POST['email']
+            mydictionary={
+                "form": FeedbackForm()
+            }
+            Errors=[]
+            errorflag=False
+            if title != title.upper():
+                errorflag=True
+                errormsg='Title should be in Capital'
+                Errors.append(errormsg)
+            import re
+            # https://www.geeksforgeeks.org/regular-expression-python-examples-set-1/
+            # https://www.geeksforgeeks.org/check-if-email-address-valid-or-not-in-python/
+            regex ='^(\w|\.|\-)+[@](\w|\.|\-)+[.]\w{2,3}$'
+            if not re.search(regex, email):
+                errorflag=True
+                errormsg='Email address is not valid'
+                Errors.append(errormsg)
+            if errorflag!=True:
+                mydictionary["success"]=True
+                mydictionary["successmsg"]="Form submitted"
+            mydictionary["error"]=errorflag
+            mydictionary["errors"]=Errors       
+            print("postttt")
+            return render(request, 'myform2.html', context=mydictionary)
+    elif request.method=='GET':
+        form = FeedbackForm()
+        mydictionary={
+            'form':form
+        }
+        print("gettttt")
+        return render(request, 'myform2.html', context=mydictionary)
